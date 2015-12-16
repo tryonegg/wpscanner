@@ -9,14 +9,16 @@ var
 	stringify = require('csv-stringify'),
 	parse = require('csv-parse'),
 	prompt = require('prompt'),
+	ProgressBar = require('progress'),
 	
 	//listURL = "http://www.utexas.edu/world/univ/alpha/",
 	listURL = "https://raw.githubusercontent.com/endSly/world-universities-csv/master/world-universities.csv",
 	links = Array(),
-	logsDir = './logs';
+	logsDir = './logs',
+	progress = null;
 
-http.globalAgent.maxSockets = maxconnections;
-https.globalAgent.maxSockets = maxconnections;
+	http.globalAgent.maxSockets = maxconnections;
+	https.globalAgent.maxSockets = maxconnections;	
 
 var baseRequest = require("request");
 var request = baseRequest.defaults({
@@ -107,7 +109,7 @@ var Site = Backbone.Model.extend({
 				this.set("elapsedTime", response.request.elapsedTime);
 				this.isWordPress();
 			} else {
-				console.log(error);
+				//console.log(error);
 				this.fetched = true;
 				this.trigger("processed", this);
 			}
@@ -172,7 +174,7 @@ var Site = Backbone.Model.extend({
 				this.set("version", version);
 
 			} else {
-				console.log(error);
+				//console.log(error);
 			}
 
 			this.itIsWordPress();
@@ -190,7 +192,7 @@ var Site = Backbone.Model.extend({
 				if( response.statusCode == 404 ) this.set("multisite", true);
 				else this.set("multisite", false);
 			} else {
-				console.log(error);
+				//console.log(error);
 			}
 
 			this.trigger("processed", this);
@@ -211,12 +213,25 @@ var Sites = Backbone.Collection.extend({
 	
 	processed: function( model ){
 		this.activeConnections--;
-		console.log("Processed", model.get("title"));
-		console.log("Active Connections", this.activeConnections);
+		progress.tick({
+			'site': model.get("title"), 
+			'active': this.activeConnections
+		});	
+		//console.log("Processed", model.get("title"));
+		//console.log("Active Connections", this.activeConnections);
 		this.checkSite();
 	},
 	
 	startChecking: function(){
+		console.log("Start Scan", maxconnections);
+		
+		progress = new ProgressBar('Checking [:bar] :percent checking :active', {
+			complete: '=',
+			incomplete: ' ',
+			width: 20,
+			total: ( this.country )? this.where({country: this.country}).length : this.length
+		});
+		
 		//spin up x number of checkers
 		for (var index = 0; index < maxconnections; index++) {
 			this.checkSite();
@@ -235,7 +250,7 @@ var Sites = Backbone.Collection.extend({
 		
 		//if we found a site check it
 		if(s){
-			console.log("Checking", s.get("title"));
+			//console.log("Checking", s.get("title"));
 			this.activeConnections++;
 			s.isWordPress();
 			return;
@@ -293,28 +308,48 @@ parser = parse(function(err, data){
 			"title" : element[1]
 		})
 	}
-	console.log("Sites Added: ", sites.length);
+	console.log("Sites Found: ", sites.length);
 	
-	console.log(
-		sites.countBy(function(i){
-			return i.get("country");
-		})
-	);	
+	
+	countries = sites.countBy(function(i){
+		return i.get("country");
+	});
+	
+	countrylist = [];
+	for (var property in countries) {
+		countrylist.push(property + ": " + countries[property]);
+	}
+
+	console.log( "Countries: Total sites" );
+	console.log( countrylist.join(", ") );
 	
 	promptuser();
 	
 }); 
 
 promptuser = function(){
-	
-	prompt.start();
 
-	prompt.get(["connections", "country"], function(err, result){
-		if(result.connections != ""){
-			maxconnections = result.connections
+	prompt.get([
+		/*{
+			name: "connections",
+			description: 'Max number of connections to use',
+			message: 'Must be a number',
+			default: maxconnections,
+
+		},*/
+		{
+			name: "country",
+			description: 'Select a country, leave blank for all',
+			pattern: /^\w+$/,
 		}
-		
-		console.log(result.country.toUpperCase());
+	  ], function(err, result){
+		/*
+		if(result.connections != ""){
+			maxconnections = parseInt(result.connections)
+		}
+		http.globalAgent.maxSockets = maxconnections;
+		https.globalAgent.maxSockets = maxconnections;		
+		*/
 		
 		if(result.country != ""){
 			sites.country = result.country.toUpperCase();
@@ -322,7 +357,6 @@ promptuser = function(){
 
 		//fire off the site check
 		sites.startChecking();
-
 	});	
 	
 }
