@@ -11,7 +11,10 @@
     "cheerio":  "^0.19.0",
     "request":  "^2.65.0",
     "underscore":  "^1.8.3",
-    "backbone": "^1.2.3"
+    "backbone": "^1.2.3",
+    "csv-stringify": "^0.0.8",
+    "csv-parse": "^1.0.1",
+    "prompt": "^0.2.14"
   },
   "devDependencies": {},
   "author": "Tryon Eggleston",
