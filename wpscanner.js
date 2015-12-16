@@ -110,6 +110,7 @@ var Site = Backbone.Model.extend({
 				this.isWordPress();
 			} else {
 				//console.log(error);
+				this.set("error", true);
 				this.fetched = true;
 				this.trigger("processed", this);
 			}
