@@ -1,5 +1,5 @@
 var
-	maxconnections = 10,
+	maxconnections = 50,
 	fs = require('fs'),
 	http = require('http'),
 	https = require('https'),
@@ -299,11 +299,23 @@ parser = parse(function(err, data){
 		sites.countBy(function(i){
 			return i.get("country");
 		})
-	);
+	);	
+	
+	promptuser();
+	
+}); 
+
+promptuser = function(){
 	
 	prompt.start();
-	prompt.get(["country"], function(err, result){
+
+	prompt.get(["connections", "country"], function(err, result){
+		if(result.connections != ""){
+			maxconnections = result.connections
+		}
+		
 		console.log(result.country.toUpperCase());
+		
 		if(result.country != ""){
 			sites.country = result.country.toUpperCase();
 		}
@@ -311,12 +323,9 @@ parser = parse(function(err, data){
 		//fire off the site check
 		sites.startChecking();
 
-	});
+	});	
 	
-	
-	
-}); 
-
+}
 
 console.log("Updateing institution list");
 
