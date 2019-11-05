@@ -13,7 +13,7 @@
     "underscore":  "^1.8.3",
     "backbone": "^1.2.3",
     "csv-stringify": "^0.0.8",
-    "csv-parse": "^1.0.1",
+    "csv-parse": "^4.6.5",
     "prompt": "^0.2.14",
     "progress": "^1.1.8"
   },
